@@ -1,9 +1,12 @@
 import unittest
+import pygame
 from src.utils import draw_text, get_cage_rect, get_left_item_area_rect, get_right_item_area_rect
 
 class TestUtils(unittest.TestCase):
 
     def setUp(self):
+        pygame.init()
+        pygame.font.init()
         self.screen_width = 800
         self.screen_height = 600
 
@@ -17,7 +20,9 @@ class TestUtils(unittest.TestCase):
     def test_get_cage_rect(self):
         # Test cage rectangle calculation
         cage_rect = get_cage_rect(self.screen_width, self.screen_height)
-        self.assertEqual(cage_rect.width, min(self.screen_width - 20, self.screen_height * 0.8 * 0.8))
+        # The cage width should be cage_height * 0.8, where cage_height = screen_height * 0.55
+        expected_width = min(self.screen_height * 0.55 * 0.8, self.screen_width - 20)
+        self.assertEqual(cage_rect.width, expected_width)
         self.assertEqual(cage_rect.height, max(50, self.screen_height * 0.55))
 
     def test_get_left_item_area_rect(self):
