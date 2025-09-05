@@ -1,4 +1,5 @@
 # filepath: kindergarten-snake-game/kindergarten-snake-game/src/game_state.py
+import random
 from constants import *
 
 class GameState:
@@ -75,9 +76,13 @@ class GameState:
         self.current_level = level
         self.lives = 3
         self.score_in_row = 0
-        self.snake_size = 5
+        self.snake_size = 25  # Increased size for dramatic gameplay
         
-        self.snake_pos = (cage_rect.centerx, cage_rect.centery)
+        if cage_rect is not None:
+            self.snake_pos = (cage_rect.centerx, cage_rect.centery)
+        else:
+            # Default position if cage_rect is None
+            self.snake_pos = (screen_width // 2, screen_height // 2)
         self.snake_direction = (1, 0)
         self.snake_target_pos = None
         self.snake_pulsing = False
@@ -103,6 +108,8 @@ class GameState:
     def check_win_condition(self):
         if self.score_in_row >= LEVELS[self.current_level]['target']:
             self.current_state = STATE_WIN_LEVEL_ANIMATING
+            return True
+        return False
     
     def update_powerups(self, dt):
         if len(self.available_powerups) < self.max_powerups:
