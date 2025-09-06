@@ -24,6 +24,14 @@ class Button:
         self.pulse_direction = 1
         self.scale_factors = scale_factors or {'x': 1.0, 'y': 1.0, 'uniform': 1.0, 'font': 1.0}
         
+        # Enhanced visual effects
+        self.glow_alpha = 0
+        self.hover_scale = 1.0
+        self.target_scale = 1.0
+        self.animation_time = 0
+        self.shadow_offset = 3
+        self.gradient_enabled = True
+        
         # Apply initial scaling
         self.apply_scaling()
         
@@ -57,47 +65,88 @@ class Button:
             self.icon_surface = None
     
     def draw(self, surface):
-        """Draw the button on the given surface with current scaling applied"""
+        """Draw the button on the given surface with enhanced visual effects"""
+        # Update visual effects
+        self.update_visual_effects()
+        
         # Create a copy of the button rect for drawing calculations
         button_rect = pygame.Rect(self.x, self.y, self.width, self.height)
         
+        # Apply hover scale effect
+        if self.hover:
+            self.target_scale = 1.05
+        else:
+            self.target_scale = 1.0
+        
+        # Apply scaling
+        if self.hover_scale != 1.0:
+            scaled_width = int(self.width * self.hover_scale)
+            scaled_height = int(self.height * self.hover_scale)
+            x_offset = (scaled_width - self.width) // 2
+            y_offset = (scaled_height - self.height) // 2
+            button_rect = pygame.Rect(self.x - x_offset, self.y - y_offset, scaled_width, scaled_height)
+        
         # Apply pulsing effect if active
-        actual_width = self.width
-        actual_height = self.height
+        actual_width = button_rect.width
+        actual_height = button_rect.height
         if self.pulsing:
             self.update_pulse()
             scale_factor = 1.0 + self.pulse_amount
-            actual_width = int(self.width * scale_factor)
-            actual_height = int(self.height * scale_factor)
+            actual_width = int(button_rect.width * scale_factor)
+            actual_height = int(button_rect.height * scale_factor)
             # Adjust position to keep button centered during pulse
-            x_offset = (actual_width - self.width) // 2
-            y_offset = (actual_height - self.height) // 2
-            button_rect = pygame.Rect(self.x - x_offset, self.y - y_offset, actual_width, actual_height)
+            x_offset = (actual_width - button_rect.width) // 2
+            y_offset = (actual_height - button_rect.height) // 2
+            button_rect = pygame.Rect(button_rect.x - x_offset, button_rect.y - y_offset, actual_width, actual_height)
         
-        # Draw button background
+        # Draw enhanced shadow
+        if not self.clicked:
+            self.draw_enhanced_shadow(surface, button_rect)
+        
+        # Draw glow effect
+        self.draw_enhanced_glow(surface, button_rect)
+        
+        # Draw button background with gradient or solid color
         color = self.color
         if self.hover:
-            # Brighten color on hover
-            color = tuple(min(255, c + 20) for c in self.color)
-        pygame.draw.rect(surface, color, button_rect, border_radius=int(min(actual_width, actual_height) * 0.2))
+            # Brighten color on hover with pulse effect
+            import math
+            pulse = math.sin(self.animation_time) * 0.5 + 0.5
+            pulse_amount = int(30 * pulse)
+            color = tuple(min(255, c + 20 + pulse_amount) for c in self.color)
         
-        # Draw button border
+        # Try gradient background first
+        if not self.draw_gradient_background(surface, button_rect):
+            # Fallback to solid color
+            pygame.draw.rect(surface, color, button_rect, border_radius=int(min(actual_width, actual_height) * 0.2))
+        
+        # Draw button border with enhanced style
         border_width = max(1, int(2 * self.scale_factors['uniform']))
-        pygame.draw.rect(surface, BLACK, button_rect, width=border_width, border_radius=int(min(actual_width, actual_height) * 0.2))
+        border_color = tuple(min(255, c + 50) for c in color)
+        pygame.draw.rect(surface, border_color, button_rect, width=border_width, border_radius=int(min(actual_width, actual_height) * 0.2))
         
         # Draw icon if present
         if self.icon_surface:
             icon_rect = self.icon_surface.get_rect(center=button_rect.center)
             surface.blit(self.icon_surface, icon_rect)
         
-        # Draw text
+        # Draw text with shadow effect
         if self.text:
             # Scale font based on button size
             font_size = int(min(actual_height * 0.6, 36) * self.scale_factors['font'])
             try:
                 font = pygame.font.SysFont('Arial', font_size, bold=True)
+                
+                # Draw text shadow
+                shadow_surface = font.render(self.text, True, (0, 0, 0))
+                shadow_rect = shadow_surface.get_rect(center=(button_rect.centerx + 1, button_rect.centery + 1))
+                surface.blit(shadow_surface, shadow_rect)
+                
+                # Draw main text
                 text_surface = font.render(self.text, True, self.text_color)
                 text_rect = text_surface.get_rect(center=button_rect.center)
+                if self.clicked:
+                    text_rect.y += 1  # Pressed effect
                 surface.blit(text_surface, text_rect)
             except pygame.error as e:
                 print(f"Error rendering text on button: {e}")
@@ -167,3 +216,77 @@ class Button:
         """Set new button position"""
         self.x = x
         self.y = y
+
+    def update_visual_effects(self, dt=0.016):
+        """Update visual effects animations."""
+        self.animation_time += dt * 5
+        
+        # Update hover scale animation
+        scale_diff = self.target_scale - self.hover_scale
+        self.hover_scale += scale_diff * 0.1
+        
+        # Update glow effect
+        if self.hover:
+            self.glow_alpha = min(100, self.glow_alpha + dt * 200)
+        else:
+            self.glow_alpha = max(0, self.glow_alpha - dt * 150)
+
+    def draw_enhanced_shadow(self, surface, button_rect):
+        """Draw enhanced shadow effect."""
+        shadow_rect = button_rect.copy()
+        shadow_rect.x += self.shadow_offset
+        shadow_rect.y += self.shadow_offset
+        
+        try:
+            shadow_surface = pygame.Surface((shadow_rect.width, shadow_rect.height), pygame.SRCALPHA)
+            shadow_surface.fill((0, 0, 0, 80))
+            pygame.draw.rect(shadow_surface, (0, 0, 0, 80), (0, 0, shadow_rect.width, shadow_rect.height),
+                           border_radius=int(min(shadow_rect.width, shadow_rect.height) * 0.2))
+            surface.blit(shadow_surface, shadow_rect)
+        except:
+            # Fallback shadow
+            pygame.draw.rect(surface, (0, 0, 0), shadow_rect,
+                           border_radius=int(min(shadow_rect.width, shadow_rect.height) * 0.2))
+
+    def draw_enhanced_glow(self, surface, button_rect):
+        """Draw glow effect around button."""
+        if self.glow_alpha <= 0:
+            return
+            
+        glow_size = 10
+        for i in range(glow_size, 0, -2):
+            glow_alpha = int(self.glow_alpha * (glow_size - i) / glow_size)
+            if glow_alpha > 5:
+                glow_rect = button_rect.inflate(i * 2, i * 2)
+                glow_color = (*self.color, glow_alpha)
+                try:
+                    glow_surface = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
+                    pygame.draw.rect(glow_surface, glow_color, (0, 0, glow_rect.width, glow_rect.height),
+                                   border_radius=int(min(glow_rect.width, glow_rect.height) * 0.2 + i))
+                    surface.blit(glow_surface, glow_rect)
+                except:
+                    break
+
+    def draw_gradient_background(self, surface, button_rect):
+        """Draw button with gradient background."""
+        if not self.gradient_enabled:
+            return False
+            
+        # Create gradient from lighter to darker
+        light_color = tuple(min(255, c + 30) for c in self.color)
+        dark_color = tuple(max(0, c - 20) for c in self.color)
+        
+        try:
+            gradient_surface = pygame.Surface((button_rect.width, button_rect.height))
+            
+            for y in range(button_rect.height):
+                ratio = y / button_rect.height
+                r = int(light_color[0] + (dark_color[0] - light_color[0]) * ratio)
+                g = int(light_color[1] + (dark_color[1] - light_color[1]) * ratio)
+                b = int(light_color[2] + (dark_color[2] - light_color[2]) * ratio)
+                pygame.draw.line(gradient_surface, (r, g, b), (0, y), (button_rect.width, y))
+            
+            surface.blit(gradient_surface, button_rect)
+            return True
+        except:
+            return False

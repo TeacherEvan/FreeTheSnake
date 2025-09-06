@@ -47,6 +47,17 @@ class WelcomeScreen:
         self.title_pulse = 0
         self.title_pulse_direction = 1
         
+        # Enhanced visual effects
+        self.background_time = 0
+        self.gradient_colors = [
+            (30, 40, 80),   # Deep blue
+            (40, 20, 60),   # Purple
+            (20, 50, 40),   # Teal
+            (50, 30, 70)    # Violet
+        ]
+        self.floating_particles = []
+        self.glow_effects = []
+        
         # Initialize mouse trail
         self.mouse_trail = []
         self.mouse_position = (0, 0)
@@ -383,6 +394,9 @@ class WelcomeScreen:
         # Increment animation frame
         self.animation_frame += 1
         
+        # Update background animation time
+        self.background_time += 0.016  # Assuming 60 FPS
+        
         # Update title snake movement
         self.update_title_snake()
         
@@ -577,16 +591,12 @@ class WelcomeScreen:
             self.transition_progress = 0
 
     def draw(self):
-        """Draw the welcome screen."""
-        # Draw gradient background
-        for y in range(0, self.screen_height, 2):
-            if y < len(self.background_colors):
-                pygame.draw.line(
-                    self.screen,
-                    self.background_colors[y],
-                    (0, y),
-                    (self.screen_width, y)
-                )
+        """Draw the welcome screen with enhanced visual effects."""
+        # Draw animated gradient background
+        self.draw_enhanced_background()
+        
+        # Draw floating particles
+        self.draw_floating_particles()
         
         # Draw decorative elements
         self.draw_decorations()
@@ -594,28 +604,151 @@ class WelcomeScreen:
         # Draw the animated title snake
         self.draw_title_snake()
         
-        # Draw the title with a shadow for better visibility
-        title_y = 100
-        draw_text(
-            self.screen, 
-            "Kindergarten Snake!",
-            (self.screen_width // 2, title_y), 
-            self.title_font, 
-            WHITE, 
-            center=True, 
-            shadow=True,
-            shadow_color=BLACK
-        )
+        # Draw enhanced title with glow effects
+        self.draw_enhanced_title()
         
-        # Draw the motivational message with animation
-        draw_animated_text(
-            self.screen, 
-            self.current_message,
-            (self.screen_width // 2, title_y + 80), 
-            self.subtitle_font, 
-            YELLOW, 
-            self.animation_frame
-        )
+        # Draw character selection with improved visuals
+        self.draw_character_selection()
+        
+        # Draw enhanced start button
+        self.draw_enhanced_start_button()
+        
+        # Draw utility buttons
+        self.draw_utility_buttons()
+        
+        # Draw mouse trail effect
+        self.draw_mouse_trail()
+
+    def draw_enhanced_background(self):
+        """Draw an animated gradient background."""
+        try:
+            from ui.enhanced_graphics import create_animated_background
+            animated_bg = create_animated_background(
+                self.screen_width, 
+                self.screen_height, 
+                self.background_time, 
+                self.gradient_colors
+            )
+            self.screen.blit(animated_bg, (0, 0))
+        except ImportError:
+            # Fallback to original gradient
+            for y in range(0, self.screen_height, 2):
+                if y < len(self.background_colors):
+                    pygame.draw.line(
+                        self.screen,
+                        self.background_colors[y],
+                        (0, y),
+                        (self.screen_width, y)
+                    )
+
+    def draw_floating_particles(self):
+        """Draw floating decorative particles."""
+        # Add new particles occasionally
+        if random.random() < 0.05:  # 5% chance per frame
+            self.floating_particles.append({
+                'x': random.randint(0, self.screen_width),
+                'y': self.screen_height + 10,
+                'speed': random.uniform(0.5, 2.0),
+                'size': random.randint(2, 6),
+                'color': random.choice([YELLOW, WHITE, BRIGHT_CYAN, LIGHT_YELLOW]),
+                'alpha': 255,
+                'rotation': 0,
+                'rotation_speed': random.uniform(-0.1, 0.1)
+            })
+        
+        # Update and draw particles
+        particles_to_keep = []
+        for particle in self.floating_particles:
+            particle['y'] -= particle['speed']
+            particle['rotation'] += particle['rotation_speed']
+            particle['alpha'] = max(0, particle['alpha'] - 1)
+            
+            if particle['y'] > -10 and particle['alpha'] > 0:
+                # Draw particle with alpha
+                try:
+                    particle_surface = pygame.Surface((particle['size'] * 2, particle['size'] * 2), pygame.SRCALPHA)
+                    color_with_alpha = (*particle['color'], particle['alpha'])
+                    pygame.draw.circle(particle_surface, color_with_alpha, 
+                                     (particle['size'], particle['size']), particle['size'])
+                    
+                    # Rotate the particle
+                    rotated_surface = pygame.transform.rotate(particle_surface, math.degrees(particle['rotation']))
+                    rot_rect = rotated_surface.get_rect(center=(particle['x'], particle['y']))
+                    self.screen.blit(rotated_surface, rot_rect)
+                except:
+                    # Fallback to simple circle
+                    pygame.draw.circle(self.screen, particle['color'], 
+                                     (int(particle['x']), int(particle['y'])), particle['size'])
+                
+                particles_to_keep.append(particle)
+        
+        self.floating_particles = particles_to_keep
+
+    def draw_enhanced_start_button(self):
+        """Draw the start button with enhanced visual effects."""
+        if self.start_button_rect:
+            # Draw button shadow
+            shadow_rect = self.start_button_rect.copy()
+            shadow_rect.x += 4
+            shadow_rect.y += 4
+            try:
+                shadow_surface = pygame.Surface((shadow_rect.width, shadow_rect.height), pygame.SRCALPHA)
+                shadow_surface.fill((0, 0, 0, 100))
+                self.screen.blit(shadow_surface, shadow_rect)
+            except:
+                pygame.draw.rect(self.screen, (0, 0, 0), shadow_rect, border_radius=15)
+            
+            # Draw button with gradient effect
+            button_color = BRIGHT_GREEN
+            if hasattr(self, 'start_button_hovered') and self.start_button_hovered:
+                button_color = (0, 255, 100)  # Brighter green on hover
+                # Add glow effect
+                glow_rect = self.start_button_rect.inflate(10, 10)
+                try:
+                    glow_surface = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
+                    glow_surface.fill((*button_color, 50))
+                    self.screen.blit(glow_surface, glow_rect)
+                except:
+                    pass
+            
+            # Draw main button
+            pygame.draw.rect(self.screen, button_color, self.start_button_rect, border_radius=15)
+            pygame.draw.rect(self.screen, WHITE, self.start_button_rect, width=3, border_radius=15)
+            
+            # Draw button text with shadow
+            button_text = "Start!"
+            button_font = self.button_font or FONT_MEDIUM
+            
+            # Text shadow
+            shadow_surface = button_font.render(button_text, True, BLACK)
+            shadow_rect = shadow_surface.get_rect(center=(self.start_button_rect.centerx + 2, self.start_button_rect.centery + 2))
+            self.screen.blit(shadow_surface, shadow_rect)
+            
+            # Main text
+            text_surface = button_font.render(button_text, True, WHITE)
+            text_rect = text_surface.get_rect(center=self.start_button_rect.center)
+            self.screen.blit(text_surface, text_rect)
+
+    def draw_utility_buttons(self):
+        """Draw utility buttons with enhanced visuals."""
+        # Sound button
+        if hasattr(self, 'sound_button_rect'):
+            pygame.draw.rect(self.screen, GREY, self.sound_button_rect, border_radius=8)
+            pygame.draw.rect(self.screen, BLACK, self.sound_button_rect, width=2, border_radius=8)
+            
+            # Draw sound icon
+            self.draw_sound_icon(self.sound_button_rect.centerx, self.sound_button_rect.centery)
+        
+        # Tutorial button
+        if hasattr(self, 'tutorial_button_rect'):
+            pygame.draw.rect(self.screen, GREY, self.tutorial_button_rect, border_radius=8)
+            pygame.draw.rect(self.screen, BLACK, self.tutorial_button_rect, width=2, border_radius=8)
+            
+            # Draw question mark
+            font = FONT_SMALL or pygame.font.Font(None, 24)
+            text_surface = font.render("?", True, BLACK)
+            text_rect = text_surface.get_rect(center=self.tutorial_button_rect.center)
+            self.screen.blit(text_surface, text_rect)
         
         # Draw character selection
         self.draw_character_selection()
