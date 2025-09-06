@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+import colorsys
 from constants import *
 from utils import draw_text, get_cage_rect, draw_animated_text
 

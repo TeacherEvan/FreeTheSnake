@@ -7,6 +7,11 @@ from constants import *
 
 def draw_text(surface, text, pos, font, color=WHITE, center=False, shadow=False, shadow_color=BLACK):
     try:
+        # Defensive check for None font
+        if font is None:
+            print(f"Warning: Font is None for text '{text}'. Using default font.")
+            font = pygame.font.Font(None, 36)
+            
         text_surface = font.render(str(text), True, color)
         text_rect = text_surface.get_rect()
         if center:
@@ -277,6 +282,11 @@ def get_motivational_message(correct_count=0, score_streak=0, level=1):
 
 def draw_animated_text(surface, text, pos, font, color, frame_counter, center=True):
     x, y = pos
+    
+    # Defensive check for None font
+    if font is None:
+        print(f"Warning: Font is None for animated text '{text}'. Using default font.")
+        font = pygame.font.Font(None, 36)
     
     y_offset = math.sin(frame_counter * 0.1) * 5
     
