@@ -23,6 +23,10 @@ def main():
     screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
     pygame.display.set_caption("Kindergarten Snake Game")
     clock = pygame.time.Clock()
+    
+    # Initialize fonts before creating screen objects
+    from constants import initialize_fonts
+    initialize_fonts()
 
     game_state = GameState()
     game_state.screen_width = screen_width

@@ -1,3 +1,5 @@
+import pygame
+import random
 from constants import *
 from utils import draw_text, get_scale_factors
 

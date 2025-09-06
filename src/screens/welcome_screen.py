@@ -8,42 +8,25 @@ class WelcomeScreen:
     def __init__(self, screen, game_state):
         self.screen = screen
         self.game_state = game_state
-        self.title_font = FONT_TITLE
-        self.subtitle_font = FONT_MEDIUM
         self.start_button_rect = None
         
         # Screen dimensions for positioning
         self.screen_width = screen.get_width()
         self.screen_height = screen.get_height()
-        self.update_dimensions(self.screen_width, self.screen_height)
         
         # Animation variables
         self.animation_frame = 0
         self.background_colors = []
-        self.generate_background()
         
-        # Snake animation parameters for title screen
+        # Snake animation parameters for title screen - initialize before update_dimensions
         self.title_snake_segments = []
         self.title_snake_direction = (1, 0)
         self.title_snake_speed = 2
         self.title_snake_size = 15
         self.title_snake_length = 10
         self.title_snake_color_shift = 0
-        self.initialize_title_snake()
         
-        # Decorative elements
-        self.stars = []
-        self.bubbles = []
-        self.generate_decorations()
-        
-        # Sound buttons (placeholder - no actual sounds loaded)
-        self.sound_button_rect = pygame.Rect(self.screen_width - 60, 20, 40, 40)
-        self.sound_enabled = True
-        
-        # Tutorial button - helps kindergarteners learn game controls
-        self.tutorial_button_rect = pygame.Rect(self.screen_width - 60, 70, 40, 40)
-        
-        # Character selection - creates agency for young players
+        # Character selection - initialize before calling update_dimensions
         self.selected_character = 0
         self.character_colors = [
             (34, 139, 34),   # Green
@@ -54,7 +37,44 @@ class WelcomeScreen:
         ]
         self.character_names = ["Slinky", "Bubbles", "Flame", "Violet", "Sunny"]
         self.character_buttons = []
-        self.setup_character_buttons()
+        
+        # Decorative elements - initialize before update_dimensions
+        self.stars = []
+        self.bubbles = []
+        
+        # Add pulse effects on title - initialize before update_dimensions
+        self.title_pulse = 0
+        self.title_pulse_direction = 1
+        
+        # Initialize mouse trail
+        self.mouse_trail = []
+        self.mouse_position = (0, 0)
+        
+        # Add a surprise element that appears randomly
+        self.surprise_timer = random.randint(180, 300)  # 3-5 seconds at 60fps
+        self.surprise_active = False
+        self.surprise_position = (0, 0)
+        self.surprise_scale = 0
+        self.surprise_type = None
+        self.surprise_active_time = 0
+        
+        # Add color splash animations
+        self.color_splashes = []
+        
+        # Now safe to call update_dimensions
+        self.update_dimensions(self.screen_width, self.screen_height)
+        
+        # Generate background and decorations after dimensions are set
+        self.generate_background()
+        self.initialize_title_snake()
+        self.generate_decorations()
+        
+        # Sound buttons (placeholder - no actual sounds loaded)
+        self.sound_button_rect = pygame.Rect(self.screen_width - 60, 20, 40, 40)
+        self.sound_enabled = True
+        
+        # Tutorial button - helps kindergarteners learn game controls
+        self.tutorial_button_rect = pygame.Rect(self.screen_width - 60, 70, 40, 40)
         
         # Transitional animations
         self.transition_active = False
@@ -83,24 +103,21 @@ class WelcomeScreen:
         # Add decorative icons that kids respond to
         self.icon_positions = []
         self.setup_decorative_icons()
-        
-        # Add interactive elements that respond to mouse
-        self.mouse_trail = []
-        self.mouse_position = (0, 0)
-        
-        # Add pulse effects on title
-        self.title_pulse = 0
-        self.title_pulse_direction = 1
-        
-        # Add a surprise element that appears randomly
-        self.surprise_timer = random.randint(180, 300)  # 3-5 seconds at 60fps
-        self.surprise_active = False
-        self.surprise_position = (0, 0)
-        self.surprise_scale = 0
-        self.surprise_type = None
-        
-        # Add color splash animations
-        self.color_splashes = []
+
+    @property
+    def title_font(self):
+        """Get the title font, ensuring it's initialized."""
+        return FONT_TITLE
+    
+    @property
+    def subtitle_font(self):
+        """Get the subtitle font, ensuring it's initialized."""
+        return FONT_MEDIUM
+
+    def setup_additional_properties(self):
+        """Setup additional properties that were being initialized after property methods."""
+        # All necessary initializations have been moved to the proper location in __init__
+        pass
 
     def update_dimensions(self, width, height):
         """Update screen dimensions when window is resized."""
