@@ -20,6 +20,9 @@ logger = get_logger(__name__)
 
 from constants import *
 from game_state import GameState
+from mobile_adapter import initialize_mobile_adapter, get_mobile_adapter
+from event_tracker import initialize_event_tracker, get_event_tracker
+from mobile_tester import initialize_mobile_tester, get_mobile_tester
 from screens.welcome_screen import WelcomeScreen
 from screens.level_select_screen import LevelSelectScreen
 from screens.game_screen import GameScreen
@@ -51,6 +54,18 @@ def main():
         from constants import initialize_fonts
         initialize_fonts()
         logger.info("Fonts initialized")
+
+        # Initialize mobile adaptability system
+        mobile_adapter = initialize_mobile_adapter(screen_width, screen_height)
+        logger.info("Mobile adapter initialized")
+        
+        # Initialize event tracking system
+        event_tracker = initialize_event_tracker()
+        logger.info("Event tracking initialized")
+        
+        # Initialize mobile testing system
+        mobile_tester = initialize_mobile_tester()
+        logger.info("Mobile testing system initialized")
 
         game_state = GameState()
         game_state.screen_width = screen_width
@@ -95,6 +110,16 @@ def main():
                     game_state.screen_width = screen_width
                     game_state.screen_height = screen_height
                     
+                    # Update mobile adapter
+                    mobile_adapter.update_dimensions(screen_width, screen_height)
+                    
+                    # Track mobile adaptation events
+                    event_tracker.track_mobile_adaptation(
+                        (screen_width, screen_height),
+                        mobile_adapter.get_orientation(),
+                        mobile_adapter.ui_scale
+                    )
+                    
                     logger.debug(f"Window resized to {screen_width}x{screen_height}")
                     
                     # Update all screens with new dimensions
@@ -105,6 +130,12 @@ def main():
                     
                     # Update other components as needed
                     pygame.display.flip()
+                
+                # Track pygame events for debugging
+                event_tracker.track_pygame_event(event)
+                
+                # Process touch events through mobile adapter
+                mobile_adapter.handle_touch_event(event)
 
                 if game_state.current_state == STATE_WELCOME:
                     welcome_screen.handle_events(event)
@@ -120,6 +151,13 @@ def main():
                     win_congrats_screen.handle_events(event)
                 elif game_state.current_state == STATE_GAME_OVER:
                     game_over_screen.handle_events(event)
+                
+                # Track screen transitions
+                if hasattr(game_state, '_previous_state') and game_state._previous_state != game_state.current_state:
+                    event_tracker.track_screen_transition(game_state._previous_state, game_state.current_state)
+                    game_state._previous_state = game_state.current_state
+                elif not hasattr(game_state, '_previous_state'):
+                    game_state._previous_state = game_state.current_state
 
             try:
                 if game_state.current_state == STATE_WELCOME:
@@ -163,10 +201,23 @@ def main():
             if game_config.get_bool('Development', 'show_fps', False) and frame_count % 60 == 0:
                 current_fps = clock.get_fps()
                 logger.debug(f"Current FPS: {current_fps:.1f}")
+                # Track performance metrics
+                event_tracker.track_performance_metric('fps', current_fps)
 
+            frame_time_ms = dt * 1000
+            mobile_adapter.track_performance(frame_time_ms)
+            event_tracker.track_performance_metric('frame_time', frame_time_ms)
+            
             dt = clock.tick(fps) / 1000.0
 
         logger.info("Game loop ended")
+        
+        # Log mobile compatibility information before shutdown
+        event_tracker.log_mobile_compatibility_info(mobile_adapter)
+        
+        # Export tracking data
+        event_tracker.cleanup()
+        
         pygame.quit()
         logger.info("Game shutdown complete")
         sys.exit()
