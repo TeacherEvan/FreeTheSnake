@@ -605,19 +605,70 @@ class WelcomeScreen:
         self.draw_title_snake()
         
         # Draw enhanced title with glow effects
-        self.draw_enhanced_title()
+        try:
+            self.draw_enhanced_title()
+        except Exception as e:
+            # Fallback to basic title drawing
+            title_y = 100
+            from utils import draw_text, draw_animated_text
+            draw_text(
+                self.screen, 
+                "Kindergarten Snake!",
+                (self.screen_width // 2, title_y), 
+                self.title_font, 
+                WHITE, 
+                center=True, 
+                shadow=True,
+                shadow_color=BLACK
+            )
+            
+            # Draw the motivational message with animation
+            draw_animated_text(
+                self.screen, 
+                getattr(self, 'current_message', 'Ready to learn and have fun?'),
+                (self.screen_width // 2, title_y + 80), 
+                self.subtitle_font, 
+                YELLOW, 
+                getattr(self, 'animation_frame', 0)
+            )
         
         # Draw character selection with improved visuals
-        self.draw_character_selection()
+        try:
+            self.draw_character_selection()
+        except Exception as e:
+            # Fallback to basic character selection
+            char_y = 200
+            from utils import draw_text
+            draw_text(self.screen, "Choose Your Snake:", (self.screen_width // 2, char_y), 
+                     self.subtitle_font, WHITE, center=True)
         
         # Draw enhanced start button
-        self.draw_enhanced_start_button()
+        try:
+            self.draw_enhanced_start_button()
+        except Exception as e:
+            # Fallback to basic start button
+            if hasattr(self, 'start_button_rect') and self.start_button_rect:
+                pygame.draw.rect(self.screen, BRIGHT_GREEN, self.start_button_rect)
+                pygame.draw.rect(self.screen, BLACK, self.start_button_rect, 2)
+                
+                font = FONT_MEDIUM or pygame.font.Font(None, 36)
+                text_surface = font.render("Start!", True, WHITE)
+                text_rect = text_surface.get_rect(center=self.start_button_rect.center)
+                self.screen.blit(text_surface, text_rect)
         
         # Draw utility buttons
-        self.draw_utility_buttons()
+        try:
+            self.draw_utility_buttons()
+        except Exception as e:
+            # Fallback - skip utility buttons if they fail
+            pass
         
         # Draw mouse trail effect
-        self.draw_mouse_trail()
+        try:
+            self.draw_mouse_trail()
+        except Exception as e:
+            # Fallback - skip mouse trail if it fails
+            pass
 
     def draw_enhanced_background(self):
         """Draw an animated gradient background."""
@@ -717,7 +768,7 @@ class WelcomeScreen:
             
             # Draw button text with shadow
             button_text = "Start!"
-            button_font = self.button_font or FONT_MEDIUM
+            button_font = getattr(self, 'button_font', None) or FONT_MEDIUM
             
             # Text shadow
             shadow_surface = button_font.render(button_text, True, BLACK)

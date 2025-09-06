@@ -20,7 +20,9 @@ class GameScreen:
         self.snake = Snake(game_state)
         
         # Initialize rewards and feedback systems
-        self.particles = []
+        from assets.particles import EnhancedParticleSystem
+        self.particle_system = EnhancedParticleSystem()
+        self.particles = []  # Keep for compatibility
         self.floating_messages = []
         self.message_frame = 0
         self.consecutive_failures = 0
@@ -284,7 +286,11 @@ class GameScreen:
         # Check for food collisions
         self.check_food_collisions()
         
-        # Update particles
+        # Update enhanced particle system
+        screen_bounds = (self.screen_width, self.screen_height)
+        self.particle_system.update(screen_bounds)
+        
+        # Update legacy particles for compatibility
         self.particles = update_particles(self.particles)
         
         # Update floating messages
@@ -678,11 +684,36 @@ class GameScreen:
         celebration_type = food["type"]
         position = food["pos"]
         
-        # Create reward burst particles
+        # Create enhanced particle effects
+        if celebration_type == "number":
+            self.particle_system.emit_burst(
+                position[0], position[1], 
+                BRIGHT_BLUE, count=20, 
+                particle_type="star"
+            )
+        elif celebration_type == "letter":
+            self.particle_system.emit_burst(
+                position[0], position[1], 
+                BRIGHT_PURPLE, count=15, 
+                particle_type="circle"
+            )
+        elif celebration_type == "shape":
+            self.particle_system.emit_fountain(
+                position[0], position[1], 
+                BRIGHT_CYAN, count=12, height=8
+            )
+        else:
+            # Default celebration
+            self.particle_system.emit_sparkles(
+                position[0], position[1], 
+                food["color"], count=10
+            )
+        
+        # Legacy particles for compatibility
         self.particles.extend(create_reward_burst(
             position,
             color=food["color"],
-            count=30,
+            count=15,  # Reduced since we have enhanced particles too
             success=True
         ))
         
@@ -982,3 +1013,80 @@ class GameScreen:
                 border_color,
                 (self.screen_width - border_width, 0, border_width, self.screen_height)
             )
+
+    def draw(self, update_timer=True):
+        """Main draw method for the game screen."""
+        # Clear screen with a nice gradient background
+        try:
+            from ui.enhanced_graphics import create_gradient_surface
+            gradient_bg = create_gradient_surface(
+                self.screen_width, self.screen_height,
+                (20, 30, 60), (40, 20, 80), "vertical"
+            )
+            self.screen.blit(gradient_bg, (0, 0))
+        except ImportError:
+            # Fallback to solid color
+            self.screen.fill((30, 30, 60))
+        
+        # Get cage rectangle
+        cage_rect = get_cage_rect(self.screen_width, self.screen_height)
+        
+        # Draw cage background
+        pygame.draw.rect(self.screen, (40, 40, 80), cage_rect)
+        pygame.draw.rect(self.screen, CAGE_COLOR, cage_rect, 5)
+        
+        # Draw food items
+        for food in self.food_items:
+            self.draw_food_item(food)
+        
+        # Draw snake
+        self.snake.draw(self.screen)
+        
+        # Draw enhanced particle system
+        self.particle_system.draw(self.screen)
+        
+        # Draw legacy particles for compatibility
+        draw_particles(self.screen, self.particles)
+        
+        # Draw floating messages
+        self.draw_floating_messages()
+        
+        # Draw UI elements
+        self.draw_ui(cage_rect)
+        
+        # Draw hint if active
+        if self.show_hint:
+            self.draw_hint(cage_rect)
+        
+        # Draw instructor feedback if active
+        if self.instructor_message and self.instructor_timer > 0:
+            display_instructor_feedback(
+                self.screen,
+                self.instructor_message,
+                (self.screen_width // 2, self.screen_height - 100),
+                self.instructor_timer / 120  # Normalize to 0-1
+            )
+
+    def draw_food_item(self, food):
+        """Draw a food item with enhanced visuals."""
+        x, y = food["pos"]
+        item_text = food["text"]
+        color = food["color"]
+        
+        # Enhanced food item rendering with glow effect
+        try:
+            from ui.enhanced_graphics import draw_glow_circle
+            draw_glow_circle(self.screen, (int(x), int(y)), 15, color, glow_radius=8)
+        except ImportError:
+            # Fallback to simple circle
+            pygame.draw.circle(self.screen, color, (int(x), int(y)), 15)
+        
+        # Draw the text/content
+        try:
+            font = FONT_SMALL or pygame.font.Font(None, 24)
+            text_surface = font.render(str(item_text), True, BLACK)
+            text_rect = text_surface.get_rect(center=(int(x), int(y)))
+            self.screen.blit(text_surface, text_rect)
+        except Exception as e:
+            # Fallback text rendering
+            pygame.draw.circle(self.screen, BLACK, (int(x), int(y)), 3)
