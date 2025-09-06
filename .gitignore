@@ -124,3 +124,8 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+# Game-specific files
+logs/
+*.log
+config_local.ini

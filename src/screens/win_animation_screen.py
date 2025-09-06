@@ -238,7 +238,8 @@ class WinAnimationScreen:
         control1_x = random.randint(center_x - 100, center_x + 100)
         control1_y = random.randint(center_y - 100, center_y)
         control2_x = random.randint(target_x - 100, target_x + 100)
-        control2_y = random.randint(center_y, target_y + 100)
+        # Fix: ensure valid range for control2_y
+        control2_y = random.randint(min(center_y, target_y + 100), max(center_y, target_y + 100))
         
         # Sample points along the curve
         points = []
