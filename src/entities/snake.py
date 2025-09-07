@@ -48,6 +48,14 @@ class Snake:
         # Interactive feedback variables
         self.celebrating = False
         self.celebration_timer = 0
+        
+        # Enhanced visual effects
+        self.trail_positions = []
+        self.glow_intensity = 0.5
+        self.segment_colors = []
+        self.pattern_offset = 0
+        self.pulse_timer = 0
+        self.speed_trail_alpha = 100
         self.celebration_particles = []
         
         # Idle behaviors for continuous engagement
@@ -481,3 +489,53 @@ class Snake:
                 pygame.draw.line(surface, color, 
                                (pos_x - small_size, pos_y + small_size), 
                                (pos_x + small_size, pos_y - small_size), 1)
+
+    def draw_enhanced_trail(self, surface):
+        """Draw a fading trail behind the snake for enhanced visual appeal."""
+        if not self.trail_positions:
+            return
+            
+        for i, pos in enumerate(self.trail_positions):
+            alpha = int(self.speed_trail_alpha * (i / len(self.trail_positions)))
+            if alpha > 10:  # Only draw if visible enough
+                trail_color = (*self.color, alpha)
+                try:
+                    # Create a surface for alpha blending
+                    trail_surface = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
+                    trail_surface.fill(trail_color)
+                    surface.blit(trail_surface, pos)
+                except:
+                    # Fallback to simple drawing
+                    pygame.draw.rect(surface, self.color, (*pos, self.size, self.size))
+
+    def draw_glow_effect(self, surface, segment, color, size):
+        """Draw a glow effect around snake segments."""
+        glow_radius = int(size * 0.3 * self.glow_intensity)
+        for i in range(glow_radius, 0, -1):
+            alpha = int(100 * self.glow_intensity * (glow_radius - i) / glow_radius)
+            if alpha > 5:
+                try:
+                    glow_surface = pygame.Surface((size + i * 2, size + i * 2), pygame.SRCALPHA)
+                    glow_color = (*color, alpha)
+                    pygame.draw.rect(glow_surface, glow_color, (0, 0, size + i * 2, size + i * 2))
+                    surface.blit(glow_surface, (segment[0] - i, segment[1] - i))
+                except:
+                    break
+
+    def get_head_rect(self):
+        """Return a pygame.Rect for the snake's head for collision detection."""
+        if len(self.body) > 0:
+            head = self.body[0]
+            return pygame.Rect(head[0], head[1], self.size, self.size)
+        return pygame.Rect(0, 0, self.size, self.size)
+
+    def check_self_collision(self):
+        """Check if the snake has collided with itself."""
+        if len(self.body) > 4:  # Need at least 5 segments to collide with self
+            head = self.body[0]
+            for segment in self.body[4:]:  # Skip first few segments
+                head_rect = pygame.Rect(head[0], head[1], self.size, self.size)
+                segment_rect = pygame.Rect(segment[0], segment[1], self.size, self.size)
+                if head_rect.colliderect(segment_rect):
+                    return True
+        return False

@@ -23,7 +23,11 @@ class TestGameState(unittest.TestCase):
     def test_assign_new_request(self):
         self.game_state.assign_new_request()
         self.assertIsInstance(self.game_state.snake_request, str)
-        self.assertIn(self.game_state.snake_request, ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'α', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'])
+        expected_items = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
+                         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
+                         'α', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+                         'Square', 'Triangle', 'Rectangle', 'Circle', 'Pentagon']
+        self.assertIn(self.game_state.snake_request, expected_items)
 
     def test_check_win_condition(self):
         self.game_state.score_in_row = 3  # Simulate correct answers
