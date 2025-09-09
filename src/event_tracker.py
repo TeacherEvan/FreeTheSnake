@@ -70,9 +70,11 @@ class EventTracker:
         else:
             logger.debug(f"Event tracked: {event_type}")
         
-        # Keep history manageable
-        if len(self.event_history) > 1000:
-            self.event_history = self.event_history[-500:]
+        # Keep history manageable - using configurable values
+        max_history = game_config.get_int('EventTracking', 'max_event_history', 1000)
+        trim_size = game_config.get_int('EventTracking', 'event_history_trim_size', 500)
+        if len(self.event_history) > max_history:
+            self.event_history = self.event_history[-trim_size:]
     
     def track_pygame_event(self, pygame_event):
         """Track pygame events with detailed information"""

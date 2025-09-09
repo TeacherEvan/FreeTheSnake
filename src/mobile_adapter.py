@@ -209,8 +209,10 @@ class MobileAdapter:
         if aspect_ratio < 1.0:
             return True
         
-        # Small landscape screens (mobile landscape)
-        if self.current_width < 1000 and self.current_height < 700:
+        # Small landscape screens (mobile landscape) - using configurable values
+        max_landscape_width = game_config.get_int('Mobile', 'mobile_max_landscape_width', 1000)
+        max_landscape_height = game_config.get_int('Mobile', 'mobile_max_landscape_height', 700)
+        if self.current_width < max_landscape_width and self.current_height < max_landscape_height:
             return True
         
         return False

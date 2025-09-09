@@ -153,10 +153,8 @@ def main():
                     game_over_screen.handle_events(event)
                 
                 # Track screen transitions
-                if hasattr(game_state, '_previous_state') and game_state._previous_state != game_state.current_state:
+                if game_state._previous_state != game_state.current_state:
                     event_tracker.track_screen_transition(game_state._previous_state, game_state.current_state)
-                    game_state._previous_state = game_state.current_state
-                elif not hasattr(game_state, '_previous_state'):
                     game_state._previous_state = game_state.current_state
 
             try:

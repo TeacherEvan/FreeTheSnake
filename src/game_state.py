@@ -5,6 +5,7 @@ from constants import *
 class GameState:
     def __init__(self):
         self.current_state = STATE_WELCOME
+        self._previous_state = STATE_WELCOME  # Initialize for proper state tracking
         self.current_level = 1
         self.lives = 3
         self.score_in_row = 0
