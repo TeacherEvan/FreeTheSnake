@@ -1,4 +1,13 @@
 # utils.py
+# Utility functions for the kindergarten snake game
+#
+# TODO: [OPTIMIZATION] Consider implementing font caching to avoid
+# repeated font creation calls - see core/lazy_loader.py for cache utilities
+#
+# TODO: [OPTIMIZATION] Consider moving particle system to GPU-accelerated
+# rendering using moderngl or pygame-ce for better performance with
+# large particle counts
+
 import pygame
 import math
 import random

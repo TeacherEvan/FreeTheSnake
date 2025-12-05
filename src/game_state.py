@@ -1,4 +1,12 @@
 # filepath: kindergarten-snake-game/kindergarten-snake-game/src/game_state.py
+# Game state management for the kindergarten snake game
+# 
+# TODO: [OPTIMIZATION] Consider implementing state persistence using SQLite
+# for saving player progress across sessions
+#
+# TODO: [OPTIMIZATION] Consider using a state machine library (e.g., transitions)
+# for more robust state management as game complexity grows
+
 import random
 from constants import *
 

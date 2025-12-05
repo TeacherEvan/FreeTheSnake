@@ -1,6 +1,10 @@
 """
 Kindergarten Snake Game - Main Game File
 This is the entry point for the kindergarten snake game.
+
+This module implements lazy loading for game screens to optimize
+startup time and memory usage. Screens are loaded on-demand when
+first accessed.
 """
 import pygame
 import sys
@@ -23,13 +27,46 @@ from game_state import GameState
 from mobile_adapter import initialize_mobile_adapter, get_mobile_adapter
 from event_tracker import initialize_event_tracker, get_event_tracker
 from mobile_tester import initialize_mobile_tester, get_mobile_tester
-from screens.welcome_screen import WelcomeScreen
-from screens.level_select_screen import LevelSelectScreen
-from screens.game_screen import GameScreen
-from screens.win_animation_screen import WinAnimationScreen
-from screens.win_congrats_screen import WinCongratsScreen
-from screens.game_over_screen import GameOverScreen
-from screens.menu_select_screen import MenuSelectScreen
+
+# TODO: [OPTIMIZATION] Consider implementing asset preloading during splash screen
+# to improve perceived performance for initial game load
+
+# Lazy-loaded screen imports - these are imported on-demand to improve startup time
+_screen_cache = {}
+
+def _get_screen_class(screen_name):
+    """
+    Lazily import and cache screen classes to reduce initial load time.
+    
+    Args:
+        screen_name: Name of the screen class to load
+        
+    Returns:
+        The screen class
+    """
+    if screen_name not in _screen_cache:
+        if screen_name == 'WelcomeScreen':
+            from screens.welcome_screen import WelcomeScreen
+            _screen_cache[screen_name] = WelcomeScreen
+        elif screen_name == 'LevelSelectScreen':
+            from screens.level_select_screen import LevelSelectScreen
+            _screen_cache[screen_name] = LevelSelectScreen
+        elif screen_name == 'GameScreen':
+            from screens.game_screen import GameScreen
+            _screen_cache[screen_name] = GameScreen
+        elif screen_name == 'WinAnimationScreen':
+            from screens.win_animation_screen import WinAnimationScreen
+            _screen_cache[screen_name] = WinAnimationScreen
+        elif screen_name == 'WinCongratsScreen':
+            from screens.win_congrats_screen import WinCongratsScreen
+            _screen_cache[screen_name] = WinCongratsScreen
+        elif screen_name == 'GameOverScreen':
+            from screens.game_over_screen import GameOverScreen
+            _screen_cache[screen_name] = GameOverScreen
+        elif screen_name == 'MenuSelectScreen':
+            from screens.menu_select_screen import MenuSelectScreen
+            _screen_cache[screen_name] = MenuSelectScreen
+    return _screen_cache.get(screen_name)
 
 def main():
     logger.info("Starting FreeTheSnake game")
@@ -72,16 +109,37 @@ def main():
         game_state.screen_height = screen_height
         logger.info("Game state initialized")
 
-        # Initialize all screen objects
-        logger.info("Initializing game screens...")
-        welcome_screen = WelcomeScreen(screen, game_state)
-        level_select_screen = LevelSelectScreen(screen, game_state)
-        game_screen = GameScreen(screen, game_state)
-        win_animation_screen = WinAnimationScreen(screen, game_state)
-        win_congrats_screen = WinCongratsScreen(screen, game_state)
-        game_over_screen = GameOverScreen(screen, game_state)
-        menu_select_screen = MenuSelectScreen(screen, game_state)
-        logger.info("All screens initialized successfully")
+        # Initialize screens lazily - only create when first accessed
+        # This improves startup time by deferring expensive screen initialization
+        logger.info("Setting up lazy screen initialization...")
+        
+        # Screen instance cache - screens are created on first access
+        screen_instances = {}
+        
+        def get_screen_instance(screen_name):
+            """
+            Get or create a screen instance lazily.
+            
+            Args:
+                screen_name: Name of the screen to get/create
+                
+            Returns:
+                The screen instance
+            """
+            if screen_name not in screen_instances:
+                logger.debug(f"Lazy loading screen: {screen_name}")
+                screen_class = _get_screen_class(screen_name)
+                if screen_class:
+                    screen_instances[screen_name] = screen_class(screen, game_state)
+                else:
+                    logger.error(f"Failed to load screen class: {screen_name}")
+                    return None
+            return screen_instances[screen_name]
+        
+        # Pre-load only the welcome screen for immediate display
+        # Other screens will be loaded on-demand
+        welcome_screen = get_screen_instance('WelcomeScreen')
+        logger.info("Welcome screen initialized (other screens lazy-loaded)")
 
         running = True
         dt = 0
@@ -122,11 +180,10 @@ def main():
                     
                     logger.debug(f"Window resized to {screen_width}x{screen_height}")
                     
-                    # Update all screens with new dimensions
-                    welcome_screen.update_dimensions(screen_width, screen_height)
-                    level_select_screen.update_dimensions(screen_width, screen_height)
-                    game_screen.update_dimensions(screen_width, screen_height)
-                    win_animation_screen.update_dimensions(screen_width, screen_height)
+                    # Update all loaded screens with new dimensions
+                    for screen_name, screen_inst in screen_instances.items():
+                        if hasattr(screen_inst, 'update_dimensions'):
+                            screen_inst.update_dimensions(screen_width, screen_height)
                     
                     # Update other components as needed
                     pygame.display.flip()
@@ -137,19 +194,26 @@ def main():
                 # Process touch events through mobile adapter
                 mobile_adapter.handle_touch_event(event)
 
+                # Handle events for the current screen (lazy load screens as needed)
                 if game_state.current_state == STATE_WELCOME:
                     welcome_screen.handle_events(event)
                 elif game_state.current_state == STATE_LEVEL_SELECT:
+                    level_select_screen = get_screen_instance('LevelSelectScreen')
                     level_select_screen.handle_events(event)
                 elif game_state.current_state == STATE_PLAYING:
+                    game_screen = get_screen_instance('GameScreen')
                     game_screen.handle_events(event)
                 elif game_state.current_state == STATE_MENU_SELECT:
+                    menu_select_screen = get_screen_instance('MenuSelectScreen')
                     menu_select_screen.handle_events(event)
                 elif game_state.current_state == STATE_WIN_LEVEL_ANIMATING:
+                    win_animation_screen = get_screen_instance('WinAnimationScreen')
                     win_animation_screen.handle_events(event)
                 elif game_state.current_state == STATE_WIN_LEVEL_CONGRATS:
+                    win_congrats_screen = get_screen_instance('WinCongratsScreen')
                     win_congrats_screen.handle_events(event)
                 elif game_state.current_state == STATE_GAME_OVER:
+                    game_over_screen = get_screen_instance('GameOverScreen')
                     game_over_screen.handle_events(event)
                 
                 # Track screen transitions
@@ -158,25 +222,36 @@ def main():
                     game_state._previous_state = game_state.current_state
 
             try:
+                # Update and draw screens based on current state (lazy load as needed)
                 if game_state.current_state == STATE_WELCOME:
                     welcome_screen.update()
                     welcome_screen.draw()
                 elif game_state.current_state == STATE_LEVEL_SELECT:
+                    level_select_screen = get_screen_instance('LevelSelectScreen')
                     level_select_screen.update()
                     level_select_screen.draw()
                 elif game_state.current_state == STATE_PLAYING:
+                    game_screen = get_screen_instance('GameScreen')
                     game_screen.update(dt)
                     game_screen.draw()
                 elif game_state.current_state == STATE_MENU_SELECT:
-                    game_screen.draw(update_timer=False)
+                    # Only load GameScreen if it's already been loaded (user was playing)
+                    # This avoids unnecessary initialization if menu is accessed another way
+                    if 'GameScreen' in screen_instances:
+                        game_screen = screen_instances['GameScreen']
+                        game_screen.draw(update_timer=False)
+                    menu_select_screen = get_screen_instance('MenuSelectScreen')
                     menu_select_screen.draw()
                 elif game_state.current_state == STATE_WIN_LEVEL_ANIMATING:
+                    win_animation_screen = get_screen_instance('WinAnimationScreen')
                     win_animation_screen.update()
                     win_animation_screen.draw()
                 elif game_state.current_state == STATE_WIN_LEVEL_CONGRATS:
+                    win_congrats_screen = get_screen_instance('WinCongratsScreen')
                     win_congrats_screen.update()
                     win_congrats_screen.draw()
                 elif game_state.current_state == STATE_GAME_OVER:
+                    game_over_screen = get_screen_instance('GameOverScreen')
                     game_over_screen.draw()
 
             except Exception as e:
