@@ -305,7 +305,7 @@ def create_loading_animation(
     color: Tuple[int, int, int] = (100, 100, 255)
 ) -> None:
     """
-    Draw a circular loading animation.
+    Draw a circular loading animation using pygame.draw.arc for efficiency.
     
     Args:
         surface: Target pygame surface
@@ -317,24 +317,18 @@ def create_loading_animation(
     # Draw background circle
     pygame.draw.circle(surface, (50, 50, 50), center, radius, 3)
     
-    # Draw progress arc
+    # Draw progress arc using pygame.draw.arc for better performance
     if progress > 0:
-        start_angle = -math.pi / 2  # Start from top
-        end_angle = start_angle + (2 * math.pi * progress)
+        start_angle = math.pi / 2  # Start from top (pygame arc uses different coordinate system)
+        end_angle = start_angle - (2 * math.pi * progress)  # Counter-clockwise
         
-        # Draw arc segments
-        segments = max(1, int(progress * 36))  # More segments = smoother arc
-        for i in range(segments):
-            angle = start_angle + (end_angle - start_angle) * i / segments
-            next_angle = start_angle + (end_angle - start_angle) * (i + 1) / segments
-            
-            start_point = (
-                center[0] + radius * math.cos(angle),
-                center[1] + radius * math.sin(angle)
-            )
-            end_point = (
-                center[0] + radius * math.cos(next_angle),
-                center[1] + radius * math.sin(next_angle)
-            )
-            
-            pygame.draw.line(surface, color, start_point, end_point, 4)
+        # Create bounding rect for the arc
+        rect = pygame.Rect(
+            center[0] - radius,
+            center[1] - radius,
+            radius * 2,
+            radius * 2
+        )
+        
+        # Use pygame's built-in arc drawing for efficiency
+        pygame.draw.arc(surface, color, rect, end_angle, start_angle, 4)

@@ -137,15 +137,23 @@ def get_cached_gradient_surface(
             pygame.draw.line(surface, color, (x, 0), (x, height))
     
     elif direction == 'radial':
+        # Optimized radial gradient using concentric circle drawing
+        # This is much faster than pixel-by-pixel set_at() calls
         center_x, center_y = width // 2, height // 2
         max_distance = math.sqrt(center_x ** 2 + center_y ** 2)
         
-        for y in range(height):
-            for x in range(width):
-                distance = math.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
-                ratio = min(1.0, distance / max_distance)
+        # Fill with end color first
+        surface.fill(end_color)
+        
+        # Draw concentric circles from outside to inside
+        # Use fewer steps for better performance (visual quality is still good)
+        num_steps = min(100, int(max_distance))
+        for i in range(num_steps, 0, -1):
+            ratio = i / num_steps
+            radius = int(max_distance * ratio)
+            if radius > 0:
                 color = _interpolate_color(start_color, end_color, ratio)
-                surface.set_at((x, y), color)
+                pygame.draw.circle(surface, color, (center_x, center_y), radius)
     
     _surface_cache.cache_surface(cache_key, surface)
     return surface

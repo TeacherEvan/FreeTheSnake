@@ -235,9 +235,12 @@ def main():
                     game_screen.update(dt)
                     game_screen.draw()
                 elif game_state.current_state == STATE_MENU_SELECT:
-                    game_screen = get_screen_instance('GameScreen')
+                    # Only load GameScreen if it's already been loaded (user was playing)
+                    # This avoids unnecessary initialization if menu is accessed another way
+                    if 'GameScreen' in screen_instances:
+                        game_screen = screen_instances['GameScreen']
+                        game_screen.draw(update_timer=False)
                     menu_select_screen = get_screen_instance('MenuSelectScreen')
-                    game_screen.draw(update_timer=False)
                     menu_select_screen.draw()
                 elif game_state.current_state == STATE_WIN_LEVEL_ANIMATING:
                     win_animation_screen = get_screen_instance('WinAnimationScreen')

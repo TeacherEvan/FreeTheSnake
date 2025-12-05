@@ -13,7 +13,7 @@ class TestLazyLoader(unittest.TestCase):
 
     def test_lazy_loader_initialization(self):
         """Test that LazyLoader initializes correctly without loading the class."""
-        loader = LazyLoader('constants', 'SCREEN_WIDTH_INIT')
+        loader = LazyLoader('game_state', 'GameState')
         # The class should not be loaded yet
         self.assertIsNone(loader._class)
         self.assertIsNone(loader._instance)
