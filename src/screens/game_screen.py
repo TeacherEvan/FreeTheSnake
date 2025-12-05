@@ -1068,25 +1068,43 @@ class GameScreen:
             )
 
     def draw_food_item(self, food):
-        """Draw a food item with enhanced visuals."""
-        x, y = food["pos"]
-        item_text = food["text"]
-        color = food["color"]
+        """Draw a food item with enhanced visuals and micro-interactions."""
+        food_position_x, food_position_y = food["pos"]
+        food_display_value = food["value"]  # Fixed: was incorrectly referencing "text"
+        food_color = food["color"]
+        food_size = food.get("size", 15)
+        
+        # Apply wiggle animation for engaging visual feedback
+        wiggle_x = math.sin(food["wiggle_offset"]) * food.get("wiggle_amount", 3)
+        wiggle_y = math.cos(food["wiggle_offset"]) * food.get("wiggle_amount", 3) * 0.5
+        
+        # Apply pulse animation for visual polish
+        pulse_factor = 1.0 + food.get("pulse", 0) * 0.02
+        animated_size = int(food_size * pulse_factor)
+        
+        # Calculate final animated position
+        animated_x = int(food_position_x + wiggle_x)
+        animated_y = int(food_position_y + wiggle_y)
         
         # Enhanced food item rendering with glow effect
         try:
             from ui.enhanced_graphics import draw_glow_circle
-            draw_glow_circle(self.screen, (int(x), int(y)), 15, color, glow_radius=8)
+            draw_glow_circle(self.screen, (animated_x, animated_y), animated_size, food_color, glow_radius=8)
         except ImportError:
-            # Fallback to simple circle
-            pygame.draw.circle(self.screen, color, (int(x), int(y)), 15)
+            # Fallback to simple circle with highlight for visual appeal
+            pygame.draw.circle(self.screen, food_color, (animated_x, animated_y), animated_size)
+            # Add a subtle highlight for depth
+            highlight_offset = animated_size // 4
+            pygame.draw.circle(self.screen, (255, 255, 255), 
+                             (animated_x - highlight_offset, animated_y - highlight_offset), 
+                             animated_size // 3)
         
-        # Draw the text/content
+        # Draw the text/content with improved readability
         try:
             font = FONT_SMALL or pygame.font.Font(None, 24)
-            text_surface = font.render(str(item_text), True, BLACK)
-            text_rect = text_surface.get_rect(center=(int(x), int(y)))
+            text_surface = font.render(str(food_display_value), True, BLACK)
+            text_rect = text_surface.get_rect(center=(animated_x, animated_y))
             self.screen.blit(text_surface, text_rect)
         except Exception as e:
             # Fallback text rendering
-            pygame.draw.circle(self.screen, BLACK, (int(x), int(y)), 3)
+            pygame.draw.circle(self.screen, BLACK, (animated_x, animated_y), 3)
