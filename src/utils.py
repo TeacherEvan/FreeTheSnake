@@ -29,7 +29,7 @@ def get_cached_font(font_name='Arial', font_size=24, bold=False, italic=False, u
     return get_cached_resource(cache_key, _create_font)
 
 
-def _get_cached_text_surface(font, text, color, antialias=True):
+def get_cached_text_surface(font, text, color, antialias=True):
     """Render text once and reuse the cached surface on future calls."""
     cache_key = f"text:{id(font)}:{text}:{color}:{antialias}"
     return get_cached_resource(cache_key, lambda: font.render(text, antialias, color))
@@ -42,7 +42,7 @@ def draw_text(surface, text, pos, font, color=WHITE, center=False, shadow=False,
             font = get_cached_font(font_size=36, use_default=True)
 
         text = str(text)
-        text_surface = _get_cached_text_surface(font, text, color)
+        text_surface = get_cached_text_surface(font, text, color)
         text_rect = text_surface.get_rect()
         if center:
             text_rect.center = pos
@@ -50,7 +50,7 @@ def draw_text(surface, text, pos, font, color=WHITE, center=False, shadow=False,
             text_rect.topleft = pos
 
         if shadow:
-            shadow_surface = _get_cached_text_surface(font, text, shadow_color)
+            shadow_surface = get_cached_text_surface(font, text, shadow_color)
             shadow_rect = shadow_surface.get_rect()
             if center:
                 shadow_rect.center = (pos[0] + 2, pos[1] + 2)
@@ -65,7 +65,7 @@ def draw_text(surface, text, pos, font, color=WHITE, center=False, shadow=False,
         traceback.print_exc()
         try:
             error_font = get_cached_font(font_size=20, use_default=True)
-            err_surf = _get_cached_text_surface(error_font, "TxtErr", RED)
+            err_surf = get_cached_text_surface(error_font, "TxtErr", RED)
             err_rect = err_surf.get_rect()
             if center: err_rect.center = pos
             else: err_rect.topleft = pos
@@ -341,7 +341,7 @@ def draw_animated_text(surface, text, pos, font, color, frame_counter, center=Tr
     else:
         text_rect.topleft = (x, y + y_offset)
     
-    shadow_surface = _get_cached_text_surface(font, str(text), (0, 0, 0))
+    shadow_surface = get_cached_text_surface(font, str(text), (0, 0, 0))
     shadow_rect = shadow_surface.get_rect()
     if center:
         shadow_rect.center = (x + 2, y + y_offset + 2)
@@ -414,7 +414,7 @@ def display_instructor_feedback(surface, feedback_type, position=(100, 100)):
     
     try:
         font = get_cached_font("Arial", 16)
-        text_surf = _get_cached_text_surface(font, message, BLACK)
+        text_surf = get_cached_text_surface(font, message, BLACK)
         text_rect = text_surf.get_rect(center=(bubble_rect.centerx, bubble_rect.centery))
         surface.blit(text_surf, text_rect)
     except Exception as e:

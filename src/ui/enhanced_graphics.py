@@ -47,14 +47,31 @@ def create_gradient_surface(width: int, height: int, start_color: Tuple[int, int
 def draw_glow_circle(surface: pygame.Surface, center: Tuple[int, int], radius: int, 
                     color: Tuple[int, int, int], glow_radius: int = 10, alpha: int = 128):
     """Draw a circle with a glowing effect."""
-    # Draw multiple circles with decreasing alpha for glow effect
-    for i in range(glow_radius, 0, -2):
-        glow_alpha = int(alpha * (glow_radius - i) / glow_radius * 0.3)
-        if glow_alpha > 0:
-            glow_surface = pygame.Surface((radius * 2 + i * 2, radius * 2 + i * 2), pygame.SRCALPHA)
-            pygame.draw.circle(glow_surface, (*color, glow_alpha), 
-                             (radius + i, radius + i), radius + i)
-            surface.blit(glow_surface, (center[0] - radius - i, center[1] - radius - i))
+    if glow_radius <= 0:
+        pygame.draw.circle(surface, color, center, radius)
+        return
+
+    cache_key = f"glow:{radius}:{color}:{glow_radius}:{alpha}"
+
+    def _create_glow_surface():
+        glow_size = radius * 2 + glow_radius * 2
+        glow_surface = pygame.Surface((glow_size, glow_size), pygame.SRCALPHA)
+
+        # Draw multiple circles with decreasing alpha for glow effect
+        for i in range(glow_radius, 0, -2):
+            glow_alpha = int(alpha * (glow_radius - i) / glow_radius * 0.3)
+            if glow_alpha > 0:
+                pygame.draw.circle(
+                    glow_surface,
+                    (*color, glow_alpha),
+                    (radius + glow_radius, radius + glow_radius),
+                    radius + i,
+                )
+
+        return glow_surface
+
+    glow_surface = get_cached_resource(cache_key, _create_glow_surface)
+    surface.blit(glow_surface, (center[0] - radius - glow_radius, center[1] - radius - glow_radius))
     
     # Draw the main circle
     pygame.draw.circle(surface, color, center, radius)

@@ -9,7 +9,7 @@ from utils import (draw_text, get_cage_rect, create_reward_burst, update_particl
                   draw_particles, get_motivational_message, draw_animated_text,
                   create_progress_indicator, display_instructor_feedback, update_difficulty,
                   show_variable_reward, apply_growth_mindset_message, avoid_learned_helplessness,
-                  get_cached_font)
+                  get_cached_font, get_cached_text_surface)
 
 class GameScreen:
     def __init__(self, screen, game_state):
@@ -606,7 +606,7 @@ class GameScreen:
             try:
                 # Create font and render text
                 font = get_cached_font("Arial", font_size, bold=True)
-                text_surf = font.render(msg["text"], True, msg["color"])
+                text_surf = get_cached_text_surface(font, msg["text"], msg["color"])
                 
                 # Rotate slightly for visual appeal
                 rotated_surf = pygame.transform.rotate(text_surf, msg["angle"] * 10)
@@ -615,7 +615,7 @@ class GameScreen:
                 text_rect = rotated_surf.get_rect(center=msg["pos"])
                 
                 # Draw shadow for better visibility
-                shadow_surf = font.render(msg["text"], True, BLACK)
+                shadow_surf = get_cached_text_surface(font, msg["text"], BLACK)
                 shadow_rect = shadow_surf.get_rect(center=(msg["pos"][0] + 2, msg["pos"][1] + 2))
                 self.screen.blit(shadow_surf, shadow_rect)
                 
@@ -1101,8 +1101,8 @@ class GameScreen:
         
         # Draw the text/content with improved readability
         try:
-            font = FONT_SMALL or pygame.font.Font(None, 24)
-            text_surface = font.render(str(food_display_value), True, BLACK)
+            font = FONT_SMALL or get_cached_font(font_size=24, use_default=True)
+            text_surface = get_cached_text_surface(font, str(food_display_value), BLACK)
             text_rect = text_surface.get_rect(center=(animated_x, animated_y))
             self.screen.blit(text_surface, text_rect)
         except Exception as e:
