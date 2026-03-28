@@ -8,7 +8,8 @@ from entities.snake import Snake
 from utils import (draw_text, get_cage_rect, create_reward_burst, update_particles, 
                   draw_particles, get_motivational_message, draw_animated_text,
                   create_progress_indicator, display_instructor_feedback, update_difficulty,
-                  show_variable_reward, apply_growth_mindset_message, avoid_learned_helplessness)
+                  show_variable_reward, apply_growth_mindset_message, avoid_learned_helplessness,
+                  get_cached_font)
 
 class GameScreen:
     def __init__(self, screen, game_state):
@@ -604,7 +605,7 @@ class GameScreen:
                 
             try:
                 # Create font and render text
-                font = pygame.font.SysFont("Arial", font_size, bold=True)
+                font = get_cached_font("Arial", font_size, bold=True)
                 text_surf = font.render(msg["text"], True, msg["color"])
                 
                 # Rotate slightly for visual appeal
@@ -614,8 +615,7 @@ class GameScreen:
                 text_rect = rotated_surf.get_rect(center=msg["pos"])
                 
                 # Draw shadow for better visibility
-                shadow_surf = pygame.font.SysFont("Arial", font_size, bold=True).render(
-                    msg["text"], True, BLACK)
+                shadow_surf = font.render(msg["text"], True, BLACK)
                 shadow_rect = shadow_surf.get_rect(center=(msg["pos"][0] + 2, msg["pos"][1] + 2))
                 self.screen.blit(shadow_surf, shadow_rect)
                 
@@ -944,7 +944,7 @@ class GameScreen:
             # Animate streak text for added excitement
             streak_scale = 1.0 + 0.1 * math.sin(self.animation_frame * 0.2)
             
-            streak_font = pygame.font.SysFont("Arial", int(28 * streak_scale), bold=True)
+            streak_font = get_cached_font("Arial", int(28 * streak_scale), bold=True)
             try:
                 streak_surf = streak_font.render(streak_text, True, ORANGE)
                 streak_rect = streak_surf.get_rect(center=(self.screen_width // 2, 85))

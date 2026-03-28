@@ -5,6 +5,11 @@ import math
 
 class Particle:
     def __init__(self, x, y, color, size, lifetime, velocity=None, gravity=0.1, particle_type="circle"):
+        self.trail_positions = []  # For trail effects
+        self.reset(x, y, color, size, lifetime, velocity, gravity, particle_type)
+
+    def reset(self, x, y, color, size, lifetime, velocity=None, gravity=0.1, particle_type="circle"):
+        """Reset the particle so it can be reused from a pool."""
         self.x = x
         self.y = y
         self.color = color
@@ -12,7 +17,7 @@ class Particle:
         self.lifetime = lifetime
         self.age = 0
         self.particle_type = particle_type
-        
+
         # Enhanced physics
         if velocity is None:
             # Random velocity for more natural movement
@@ -22,18 +27,18 @@ class Particle:
             self.velocity_y = math.sin(angle) * speed
         else:
             self.velocity_x, self.velocity_y = velocity
-            
+
         self.gravity = gravity
         self.bounce_factor = 0.7  # For bouncing particles
-        self.fade_rate = 255 / lifetime  # For smooth alpha fading
+        self.fade_rate = 255 / lifetime if lifetime else 255  # For smooth alpha fading
         self.alpha = 255
         self.rotation = random.uniform(0, 2 * math.pi)
         self.rotation_speed = random.uniform(-0.2, 0.2)
-        
+
         # Additional visual properties
         self.original_size = size
         self.pulsate_speed = random.uniform(0.05, 0.15)
-        self.trail_positions = []  # For trail effects
+        self.trail_positions.clear()
 
     def update(self, bounds=None):
         self.age += 1
@@ -81,6 +86,24 @@ class EnhancedParticleSystem:
     def __init__(self):
         self.particles = []
         self.max_particles = 500  # Performance limit
+        self._particle_pool = []
+
+    def _spawn_particle(self, x, y, color, size, lifetime, velocity=None, gravity=0.1, particle_type="circle"):
+        """Create a particle, reusing a pooled instance when possible."""
+        if self._particle_pool:
+            particle = self._particle_pool.pop()
+            particle.reset(x, y, color, size, lifetime, velocity, gravity, particle_type)
+        else:
+            particle = Particle(x, y, color, size, lifetime, velocity, gravity, particle_type)
+
+        self.particles.append(particle)
+        return particle
+
+    def _recycle_particle(self, particle):
+        """Return a dead particle to the reuse pool."""
+        particle.trail_positions.clear()
+        if len(self._particle_pool) < self.max_particles:
+            self._particle_pool.append(particle)
 
     def emit_burst(self, x, y, color, count=15, size_range=(2, 8), lifetime_range=(30, 60), particle_type="circle"):
         """Create a burst of particles for celebrations."""
@@ -90,10 +113,17 @@ class EnhancedParticleSystem:
             angle = random.uniform(0, 2 * math.pi)
             speed = random.uniform(2, 6)
             velocity = (math.cos(angle) * speed, math.sin(angle) * speed - 2)  # Slight upward bias
-            
-            particle = Particle(x, y, color, size, lifetime, velocity, 
-                              gravity=random.uniform(0.05, 0.15), particle_type=particle_type)
-            self.particles.append(particle)
+
+            self._spawn_particle(
+                x,
+                y,
+                color,
+                size,
+                lifetime,
+                velocity,
+                gravity=random.uniform(0.05, 0.15),
+                particle_type=particle_type,
+            )
 
     def emit_fountain(self, x, y, color, count=10, height=5):
         """Create a fountain effect shooting upward."""
@@ -103,10 +133,17 @@ class EnhancedParticleSystem:
             velocity_x = random.uniform(-1, 1)
             velocity_y = random.uniform(-height, -height/2)
             velocity = (velocity_x, velocity_y)
-            
-            particle = Particle(x, y, color, size, lifetime, velocity, 
-                              gravity=0.1, particle_type="shrinking")
-            self.particles.append(particle)
+
+            self._spawn_particle(
+                x,
+                y,
+                color,
+                size,
+                lifetime,
+                velocity,
+                gravity=0.1,
+                particle_type="shrinking",
+            )
 
     def emit_sparkles(self, x, y, color, count=8):
         """Create sparkling effect for achievements."""
@@ -120,10 +157,17 @@ class EnhancedParticleSystem:
             # Add some sparkle colors
             sparkle_colors = [color, (255, 255, 255), (255, 255, 0)]
             sparkle_color = random.choice(sparkle_colors)
-            
-            particle = Particle(x, y, sparkle_color, size, lifetime, velocity, 
-                              gravity=0, particle_type="pulsating")
-            self.particles.append(particle)
+
+            self._spawn_particle(
+                x,
+                y,
+                sparkle_color,
+                size,
+                lifetime,
+                velocity,
+                gravity=0,
+                particle_type="pulsating",
+            )
 
     def emit_trail(self, x, y, color, direction, count=5):
         """Create a trailing effect behind moving objects."""
@@ -132,20 +176,35 @@ class EnhancedParticleSystem:
             lifetime = random.randint(15, 25)
             offset_x = direction[0] * (i + 1) * -0.5 + random.uniform(-1, 1)
             offset_y = direction[1] * (i + 1) * -0.5 + random.uniform(-1, 1)
-            
-            particle = Particle(x + offset_x, y + offset_y, color, size, lifetime, 
-                              (0, 0), gravity=0, particle_type="shrinking")
-            self.particles.append(particle)
+
+            self._spawn_particle(
+                x + offset_x,
+                y + offset_y,
+                color,
+                size,
+                lifetime,
+                (0, 0),
+                gravity=0,
+                particle_type="shrinking",
+            )
 
     def update(self, bounds=None):
         # Remove excess particles for performance
         if len(self.particles) > self.max_particles:
+            overflow = self.particles[:-self.max_particles]
             self.particles = self.particles[-self.max_particles:]
-            
-        for particle in self.particles[:]:
+            for particle in overflow:
+                self._recycle_particle(particle)
+
+        active_particles = []
+        for particle in self.particles:
             particle.update(bounds)
-            if not particle.is_alive():
-                self.particles.remove(particle)
+            if particle.is_alive():
+                active_particles.append(particle)
+            else:
+                self._recycle_particle(particle)
+
+        self.particles = active_particles
 
     def draw(self, surface):
         for particle in self.particles:

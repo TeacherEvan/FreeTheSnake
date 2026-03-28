@@ -4,40 +4,45 @@ import pygame
 import math
 import random
 from typing import Tuple, List, Optional
+from core.lazy_loader import get_cached_resource
 
 def create_gradient_surface(width: int, height: int, start_color: Tuple[int, int, int], 
                           end_color: Tuple[int, int, int], direction: str = "vertical") -> pygame.Surface:
     """Create a gradient surface for backgrounds and effects."""
-    surface = pygame.Surface((width, height))
+    cache_key = f"gradient:{width}:{height}:{start_color}:{end_color}:{direction}"
+
+    def _create_surface():
+        surface = pygame.Surface((width, height))
     
-    if direction == "vertical":
-        for y in range(height):
-            ratio = y / height
-            r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
-            g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
-            b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
-            pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
-    elif direction == "horizontal":
-        for x in range(width):
-            ratio = x / width
-            r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
-            g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
-            b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
-            pygame.draw.line(surface, (r, g, b), (x, 0), (x, height))
-    elif direction == "radial":
-        center_x, center_y = width // 2, height // 2
-        max_distance = math.sqrt(center_x**2 + center_y**2)
-        
-        for y in range(height):
-            for x in range(width):
-                distance = math.sqrt((x - center_x)**2 + (y - center_y)**2)
-                ratio = min(distance / max_distance, 1.0)
+        if direction == "vertical":
+            for y in range(height):
+                ratio = y / height
                 r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
                 g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
                 b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
-                surface.set_at((x, y), (r, g, b))
-    
-    return surface
+                pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
+        elif direction == "horizontal":
+            for x in range(width):
+                ratio = x / width
+                r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
+                g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
+                b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
+                pygame.draw.line(surface, (r, g, b), (x, 0), (x, height))
+        elif direction == "radial":
+            center_x, center_y = width // 2, height // 2
+            max_distance = math.sqrt(center_x**2 + center_y**2)
+            
+            for y in range(height):
+                for x in range(width):
+                    distance = math.sqrt((x - center_x)**2 + (y - center_y)**2)
+                    ratio = min(distance / max_distance, 1.0)
+                    r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
+                    g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
+                    b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
+                    surface.set_at((x, y), (r, g, b))
+        return surface
+
+    return get_cached_resource(cache_key, _create_surface)
 
 def draw_glow_circle(surface: pygame.Surface, center: Tuple[int, int], radius: int, 
                     color: Tuple[int, int, int], glow_radius: int = 10, alpha: int = 128):

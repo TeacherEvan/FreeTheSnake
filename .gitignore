@@ -125,6 +125,13 @@ dmypy.json
 # PyCharm
 .idea/
 
+# Local Node / npm artifacts
+node_modules/
+package-lock.json
+package.json
+npm-debug.log*
+.npm/
+
 # Game-specific files
 logs/
 *.log

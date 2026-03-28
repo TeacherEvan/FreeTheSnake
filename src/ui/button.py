@@ -1,5 +1,6 @@
 import pygame
 from pygame import Rect, draw, font
+from utils import get_cached_font
 
 BUTTON_COLOR = (200, 200, 200)
 BLACK = (0, 0, 0)
@@ -135,7 +136,7 @@ class Button:
             # Scale font based on button size
             font_size = int(min(actual_height * 0.6, 36) * self.scale_factors['font'])
             try:
-                font = pygame.font.SysFont('Arial', font_size, bold=True)
+                font = get_cached_font('Arial', font_size, bold=True)
                 
                 # Draw text shadow
                 shadow_surface = font.render(self.text, True, (0, 0, 0))

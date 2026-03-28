@@ -12,16 +12,37 @@ import pygame
 import math
 import random
 import traceback
+from core.lazy_loader import get_cached_resource
 from constants import *
+
+
+def get_cached_font(font_name='Arial', font_size=24, bold=False, italic=False, use_default=False):
+    """Return a cached pygame font instance for repeated use."""
+    cache_key = f"font:{font_name}:{font_size}:{bold}:{italic}:{use_default}"
+
+    def _create_font():
+        if use_default or font_name is None:
+            return pygame.font.Font(None, font_size)
+
+        return pygame.font.SysFont(font_name, font_size, bold=bold, italic=italic)
+
+    return get_cached_resource(cache_key, _create_font)
+
+
+def _get_cached_text_surface(font, text, color, antialias=True):
+    """Render text once and reuse the cached surface on future calls."""
+    cache_key = f"text:{id(font)}:{text}:{color}:{antialias}"
+    return get_cached_resource(cache_key, lambda: font.render(text, antialias, color))
 
 def draw_text(surface, text, pos, font, color=WHITE, center=False, shadow=False, shadow_color=BLACK):
     try:
         # Defensive check for None font
         if font is None:
             print(f"Warning: Font is None for text '{text}'. Using default font.")
-            font = pygame.font.Font(None, 36)
-            
-        text_surface = font.render(str(text), True, color)
+            font = get_cached_font(font_size=36, use_default=True)
+
+        text = str(text)
+        text_surface = _get_cached_text_surface(font, text, color)
         text_rect = text_surface.get_rect()
         if center:
             text_rect.center = pos
@@ -29,7 +50,7 @@ def draw_text(surface, text, pos, font, color=WHITE, center=False, shadow=False,
             text_rect.topleft = pos
 
         if shadow:
-            shadow_surface = font.render(str(text), True, shadow_color)
+            shadow_surface = _get_cached_text_surface(font, text, shadow_color)
             shadow_rect = shadow_surface.get_rect()
             if center:
                 shadow_rect.center = (pos[0] + 2, pos[1] + 2)
@@ -43,8 +64,8 @@ def draw_text(surface, text, pos, font, color=WHITE, center=False, shadow=False,
         print(f"Error rendering text '{text}': {e}")
         traceback.print_exc()
         try:
-            error_font = pygame.font.Font(None, 20)
-            err_surf = error_font.render("TxtErr", True, RED)
+            error_font = get_cached_font(font_size=20, use_default=True)
+            err_surf = _get_cached_text_surface(error_font, "TxtErr", RED)
             err_rect = err_surf.get_rect()
             if center: err_rect.center = pos
             else: err_rect.topleft = pos
@@ -295,7 +316,7 @@ def draw_animated_text(surface, text, pos, font, color, frame_counter, center=Tr
     # Defensive check for None font
     if font is None:
         print(f"Warning: Font is None for animated text '{text}'. Using default font.")
-        font = pygame.font.Font(None, 36)
+        font = get_cached_font(font_size=36, use_default=True)
     
     y_offset = math.sin(frame_counter * 0.1) * 5
     
@@ -320,7 +341,7 @@ def draw_animated_text(surface, text, pos, font, color, frame_counter, center=Tr
     else:
         text_rect.topleft = (x, y + y_offset)
     
-    shadow_surface = font.render(str(text), True, (0, 0, 0))
+    shadow_surface = _get_cached_text_surface(font, str(text), (0, 0, 0))
     shadow_rect = shadow_surface.get_rect()
     if center:
         shadow_rect.center = (x + 2, y + y_offset + 2)
@@ -392,8 +413,8 @@ def display_instructor_feedback(surface, feedback_type, position=(100, 100)):
     pygame.draw.polygon(surface, BLACK, points, width=2)
     
     try:
-        font = pygame.font.SysFont("Arial", 16)
-        text_surf = font.render(message, True, BLACK)
+        font = get_cached_font("Arial", 16)
+        text_surf = _get_cached_text_surface(font, message, BLACK)
         text_rect = text_surf.get_rect(center=(bubble_rect.centerx, bubble_rect.centery))
         surface.blit(text_surf, text_rect)
     except Exception as e:
@@ -559,12 +580,15 @@ def get_scaled_font(base_font, scale_factor):
         # Try to create a font with the same name but scaled size
         font_name = base_font.get_name()
         if font_name:
-            return pygame.font.SysFont(font_name, new_size, 
-                                      bold=pygame.font.Font.get_bold(base_font),
-                                      italic=pygame.font.Font.get_italic(base_font))
+            return get_cached_font(
+                font_name,
+                new_size,
+                bold=pygame.font.Font.get_bold(base_font),
+                italic=pygame.font.Font.get_italic(base_font)
+            )
         else:
             # If we can't get the name, fall back to default font
-            return pygame.font.Font(None, new_size)
+            return get_cached_font(font_size=new_size, use_default=True)
     except:
         # Fallback if anything goes wrong
-        return pygame.font.Font(None, new_size)
+        return get_cached_font(font_size=new_size, use_default=True)
