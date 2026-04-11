@@ -2,9 +2,9 @@
 import pygame
 import random
 import math
-import colorsys
 from constants import *
 from entities.snake import Snake
+from screens.game_draw_helpers import draw_food_sprite_item, draw_game_ui
 from utils import (draw_text, get_cage_rect, create_reward_burst, update_particles, 
                   draw_particles, get_motivational_message, draw_animated_text,
                   create_progress_indicator, display_instructor_feedback, update_difficulty,
@@ -15,7 +15,8 @@ class GameScreen:
     def __init__(self, screen, game_state):
         self.screen = screen
         self.game_state = game_state
-        self.font = FONT_MEDIUM
+        self.font = get_cached_font("Consolas", 36)
+        self.animation_frame = 0
         
         # Create the snake object
         self.snake = Snake(game_state)
@@ -260,6 +261,7 @@ class GameScreen:
     def update(self, dt):
         """Update game state."""
         # Update time-based variables
+        self.animation_frame += 1
         self.message_frame += 1
         self.encouragement_timer -= dt
         self.instructor_timer -= dt
@@ -875,144 +877,7 @@ class GameScreen:
 
     def draw_ui(self, cage_rect):
         """Draw UI elements."""
-        # Draw score in top left
-        score_text = f"Score: {self.game_state.score}"
-        draw_text(self.screen, score_text, (20, 20), FONT_MEDIUM, WHITE)
-        
-        # Draw current level in top center
-        level_text = f"Level {self.game_state.current_level}"
-        draw_text(self.screen, level_text, 
-                 (self.screen_width // 2, 20), FONT_MEDIUM, WHITE, center=True)
-        
-        # Draw progress bar for level completion
-        target_items = self.game_state.current_level * 3
-        progress_width = 200
-        progress_height = 20
-        progress_x = (self.screen_width - progress_width) // 2
-        progress_y = 50
-        
-        # Background bar
-        pygame.draw.rect(
-            self.screen,
-            DARK_GREY,
-            (progress_x, progress_y, progress_width, progress_height),
-            border_radius=progress_height // 2
-        )
-        
-        # Calculate progress
-        progress_ratio = min(1.0, self.game_state.score_in_row / target_items)
-        fill_width = int(progress_width * progress_ratio)
-        
-        # Progress fill with animated gradient
-        if fill_width > 0:
-            # Create gradient based on progress
-            if progress_ratio < 0.5:
-                color = BLUE  # Blue for starting
-            elif progress_ratio < 0.8:
-                color = GREEN  # Green for good progress
-            else:
-                # Rainbow effect near completion - children love this visual reward
-                progress_hue = (self.animation_frame % 360) / 360.0
-                r, g, b = colorsys.hsv_to_rgb(progress_hue, 0.8, 0.9)
-                color = (int(r * 255), int(g * 255), int(b * 255))
-                
-            pygame.draw.rect(
-                self.screen,
-                color,
-                (progress_x, progress_y, fill_width, progress_height),
-                border_radius=progress_height // 2
-            )
-                
-        # Add shimmer effect on progress bar
-        shimmer_pos = progress_x + int(math.sin(self.animation_frame * 0.05) * progress_width * 0.5 + progress_width * 0.5)
-        if progress_x <= shimmer_pos <= progress_x + fill_width:
-            # Only show shimmer on the filled portion
-            shimmer_height = progress_height - 4
-            shimmer_width = 10
-            shimmer_y = progress_y + 2
-            
-            pygame.draw.rect(
-                self.screen,
-                (255, 255, 255, 150),  # Semi-transparent white
-                (shimmer_pos - shimmer_width//2, shimmer_y, shimmer_width, shimmer_height),
-                border_radius=shimmer_width // 2
-            )
-            
-        # Draw streak counter if on a streak
-        if self.game_state.score_in_row >= 2:
-            streak_text = f"Streak: {self.game_state.score_in_row} 🔥"
-            # Animate streak text for added excitement
-            streak_scale = 1.0 + 0.1 * math.sin(self.animation_frame * 0.2)
-            
-            streak_font = get_cached_font("Arial", int(28 * streak_scale), bold=True)
-            try:
-                streak_surf = streak_font.render(streak_text, True, ORANGE)
-                streak_rect = streak_surf.get_rect(center=(self.screen_width // 2, 85))
-                self.screen.blit(streak_surf, streak_rect)
-            except Exception as e:
-                print(f"Error rendering streak text: {e}")
-                draw_text(self.screen, streak_text, (self.screen_width // 2, 85), 
-                         FONT_MEDIUM, ORANGE, center=True)
-                         
-        # Draw active surprise effect indicator
-        if self.surprise_active:
-            # Get the color based on surprise type
-            if self.surprise_type == "rainbow_mode":
-                # Rainbow cycling color
-                hue = (self.animation_frame % 360) / 360.0
-                r, g, b = colorsys.hsv_to_rgb(hue, 0.7, 0.9)
-                color = (int(r * 255), int(g * 255), int(b * 255))
-                icon = "✨"
-            elif self.surprise_type == "food_party":
-                color = BRIGHT_GREEN
-                icon = "🍎"
-            elif self.surprise_type == "speed_boost":
-                color = BRIGHT_CYAN
-                icon = "⚡"
-            elif self.surprise_type == "giant_snake":
-                color = PURPLE
-                icon = "🐍"
-            else:
-                color = WHITE
-                icon = "?"
-                
-            # Draw surprise timer at top right
-            timer_text = f"{icon} {int(self.surprise_duration)}s"
-            draw_text(self.screen, timer_text, 
-                     (self.screen_width - 20, 20), FONT_MEDIUM, color, center=False)
-                     
-            # Draw animated border around screen
-            border_width = 6
-            pulse = 0.7 + 0.3 * math.sin(self.animation_frame * 0.1)
-            border_color = (
-                min(255, int(color[0] * pulse)),
-                min(255, int(color[1] * pulse)),
-                min(255, int(color[2] * pulse))
-            )
-            
-            # Top and bottom borders
-            pygame.draw.rect(
-                self.screen,
-                border_color,
-                (0, 0, self.screen_width, border_width)
-            )
-            pygame.draw.rect(
-                self.screen,
-                border_color,
-                (0, self.screen_height - border_width, self.screen_width, border_width)
-            )
-            
-            # Left and right borders
-            pygame.draw.rect(
-                self.screen,
-                border_color,
-                (0, 0, border_width, self.screen_height)
-            )
-            pygame.draw.rect(
-                self.screen,
-                border_color,
-                (self.screen_width - border_width, 0, border_width, self.screen_height)
-            )
+        draw_game_ui(self)
 
     def draw(self, update_timer=True):
         """Main draw method for the game screen."""
@@ -1069,42 +934,4 @@ class GameScreen:
 
     def draw_food_item(self, food):
         """Draw a food item with enhanced visuals and micro-interactions."""
-        food_position_x, food_position_y = food["pos"]
-        food_display_value = food["value"]  # Fixed: was incorrectly referencing "text"
-        food_color = food["color"]
-        food_size = food.get("size", 15)
-        
-        # Apply wiggle animation for engaging visual feedback
-        wiggle_x = math.sin(food["wiggle_offset"]) * food.get("wiggle_amount", 3)
-        wiggle_y = math.cos(food["wiggle_offset"]) * food.get("wiggle_amount", 3) * 0.5
-        
-        # Apply pulse animation for visual polish
-        pulse_factor = 1.0 + food.get("pulse", 0) * 0.02
-        animated_size = int(food_size * pulse_factor)
-        
-        # Calculate final animated position
-        animated_x = int(food_position_x + wiggle_x)
-        animated_y = int(food_position_y + wiggle_y)
-        
-        # Enhanced food item rendering with glow effect
-        try:
-            from ui.enhanced_graphics import draw_glow_circle
-            draw_glow_circle(self.screen, (animated_x, animated_y), animated_size, food_color, glow_radius=8)
-        except ImportError:
-            # Fallback to simple circle with highlight for visual appeal
-            pygame.draw.circle(self.screen, food_color, (animated_x, animated_y), animated_size)
-            # Add a subtle highlight for depth
-            highlight_offset = animated_size // 4
-            pygame.draw.circle(self.screen, (255, 255, 255), 
-                             (animated_x - highlight_offset, animated_y - highlight_offset), 
-                             animated_size // 3)
-        
-        # Draw the text/content with improved readability
-        try:
-            font = FONT_SMALL or get_cached_font(font_size=24, use_default=True)
-            text_surface = get_cached_text_surface(font, str(food_display_value), BLACK)
-            text_rect = text_surface.get_rect(center=(animated_x, animated_y))
-            self.screen.blit(text_surface, text_rect)
-        except Exception as e:
-            # Fallback text rendering
-            pygame.draw.circle(self.screen, BLACK, (animated_x, animated_y), 3)
+        draw_food_sprite_item(self.screen, food)
