@@ -4,6 +4,8 @@ FreeTheSnake is a Python-based educational game built with pygame for kindergart
 
 **ALWAYS** reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.
 
+Architecture companion: `#file:ARCHITECTURE.md` defines module ownership, naming conventions, and file-pinning guidance for zero-search agent execution.
+
 ## Working Effectively
 
 ### Bootstrap and Dependencies

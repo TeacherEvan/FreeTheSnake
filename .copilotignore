@@ -1,0 +1,39 @@
+# Keep Copilot focused on editable source, tests, and docs.
+
+# Python environment and cache artifacts
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Repo-local generated output
+.snapshots/
+logs/
+/Logs/
+*.log
+
+# Asset data
+*.meta
+*.import
+*.asset
+*.prefab
+*.mat
+
+# Media and binary content
+*.wav
+*.mp3
+*.ogg
+*.png
+*.jpg
+*.jpeg
+*.fbx
+*.blend
+
+# Engine and IDE caches
+/Library/
+/Temp/
+/obj/
+/bin/
+/.godot/
+/.vs/
