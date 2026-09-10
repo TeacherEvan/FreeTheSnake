@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "repo": "FreeTheSnake",
+    "group": "GAMES",
+    "generated": "2026-08-15 18:55",
+    "branch": "master",
+    "commits": "32",
+    "lang": "Python",
+    "status": "proposed"
+  },
+  "items": [
+    {
+      "area": "Mobile",
+      "action": "Promote mobile_demo.py + test_mobile.py into the shipped touch path (kindergarten snake game)."
+    },
+    {
+      "area": "Levels",
+      "action": "Author progressive level data (shapes/numbers/letters) per FreeTheWorm2.md spec."
+    },
+    {
+      "area": "Cleanup",
+      "action": "Resolve 6 TODOs in src; drop .venv from version control."
+    }
+  ],
+  "instructions": "FreeTheSnake (GAMES): proposed workstreams. Agent reads HERMES_PLAN.html ticks: approve(a)=implement, change(c)=revisit/clarify, skip=ignore. Compact form below.",
+  "compact": [
+    {
+      "a": "M",
+      "summary": "Promote mobile_demo.py + test_mobile.py into the shipped touch path (kindergarten snake game)."
+    },
+    {
+      "a": "L",
+      "summary": "Author progressive level data (shapes/numbers/letters) per FreeTheWorm2.md spec."
+    },
+    {
+      "a": "C",
+      "summary": "Resolve 6 TODOs in src; drop .venv from version control."
+    }
+  ]
+}
