@@ -3,7 +3,7 @@ import random
 import math
 import colorsys
 from constants import *
-from utils import draw_text, get_cage_rect, draw_animated_text
+from utils import draw_text, draw_animated_text
 
 class WelcomeScreen:
     def __init__(self, screen, game_state):
@@ -96,7 +96,7 @@ class WelcomeScreen:
         # Motivational messages that appear randomly
         self.motivational_messages = [
             "You're going to do great!",
-            "Ready to learn and have fun?",
+            WELCOME_MSG_LEARN_AND_FUN,
             "Your brain grows when you try new things!",
             "Everyone starts somewhere!",
             "Mistakes help us learn!"
@@ -625,7 +625,7 @@ class WelcomeScreen:
             # Draw the motivational message with animation
             draw_animated_text(
                 self.screen, 
-                getattr(self, 'current_message', 'Ready to learn and have fun?'),
+                getattr(self, 'current_message', WELCOME_MSG_LEARN_AND_FUN),
                 (self.screen_width // 2, title_y + 80), 
                 self.subtitle_font, 
                 YELLOW, 

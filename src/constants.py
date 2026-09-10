@@ -110,3 +110,5 @@ def initialize_fonts():
         FONT_TINY = pygame.font.Font(None, 20)
         FONT_HUD = pygame.font.Font(None, 55)
         FONT_MENU = pygame.font.Font(None, 26)
+# --- Welcome screen motivational messages ---
+WELCOME_MSG_LEARN_AND_FUN = "Ready to learn and have fun?"

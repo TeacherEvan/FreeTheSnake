@@ -136,3 +136,4 @@ npm-debug.log*
 logs/
 *.log
 config_local.ini
+docs/.scratch-audit/
