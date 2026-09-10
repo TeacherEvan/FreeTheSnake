@@ -138,3 +138,15 @@ derived from the structural signals above — they name concrete extractions
   its next tick.
 - implementer: `cron_surgical_impl.py` will pick this plan up once the reviewer
   marks it `READY` or `READY-WITH-WARNINGS`.
+
+
+## REVIEW 2026-09-10T23:33:07.798846+07:00
+
+**Verdict:** `NEEDS-REVISION`
+
+**Structural check:** objectives=12 file_header=✓ imports=✓ why=✓ dod=✓ security=✓
+
+**Gaps:**
+1. **File-type/tooling mismatch.** The target is a `.py` file (pygame, colorsys, Python imports) but every objective invokes TypeScript tooling — `pnpm`, `knip`, `ts-prune`, `export` barrels, Next.js build/test gates. None of these apply to Python. The plan would be stillborn the moment an implementer tried to run it.
+2. **Empty structural analysis, yet objectives claim derivation from it.** The plan states objectives "are derived from the structural signals above" but the structural analysis section reports _(no structural signals detected)_. No exports, hooks, render branches, repeated literals, or import cross-refs were extracted. The objectives are not file-specific; they are template filler.
+3. **Nine verbatim duplicate objectives (OBJ-004–OBJ-012).** Each "Hardening pass N" is byte-identical text with no differentiation, no specific target, and no actionable acceptance criteria beyond "type-check" on a Python file that has no type-checker configured. This is padding, not a plan. The DoD cannot be satisfied because the objectives are not implementable as written.
