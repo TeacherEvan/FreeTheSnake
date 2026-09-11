@@ -207,7 +207,7 @@ class ResourceCache:
         """
         self._cache: Dict[str, Any] = {}
         self._max_size = max_size
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._access_order: list = []
     
     def get(self, key: str, factory: Optional[Callable] = None) -> Optional[Any]:

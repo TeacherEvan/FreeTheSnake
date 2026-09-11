@@ -1,0 +1,24 @@
+Resolution: HERMES_PLAN.ai.json (generated 2026-08-15, status=proposed, 0 ticks)
+
+Verified against live code on 2026-09-11. All three workstreams already shipped;
+plan is a post-hoc snapshot, NOT an authorization. Archived, not re-implemented.
+
+Item M - "Promote mobile_demo.py + test_mobile.py into the shipped touch path":
+  DONE. src/mobile_adapter.py + src/mobile_tester.py are imported and initialized
+  in src/main.py (lines 96, 104); mobile adaptability is live in the shipped
+  path. mobile_demo.py / test_mobile.py remain standalone CLI scripts (not
+  imported by src) - that is the intended design, not a gap.
+
+Item L - "Author progressive level data per FreeTheWorm2.md":
+  DONE. src/constants.py LEVEL_CONFIGURATIONS holds 5 progressive levels
+  (target 3->10, time 20->10, speed_mult 1.0->1.4). MAX_LEVEL/MAXIMUM_LEVEL
+  wired; LevelSelectScreen iterates 1..MAX_LEVEL.
+
+Item C - "Resolve 6 TODOs in src; drop .venv from version control":
+  PARTIAL. 8 TODO comments exist, all tagged [OPTIMIZATION] and advisory
+  (font caching, GPU particles, asset preloading, screen preloading, Redis,
+  constants->config, sprite batching, SQLite/state-machine). None are defects.
+  .venv is already gitignored (.gitignore:97), 0 tracked files - drop requirement
+  satisfied.
+
+Decision: no re-implementation. Plan archived as resolved-by-code-state.

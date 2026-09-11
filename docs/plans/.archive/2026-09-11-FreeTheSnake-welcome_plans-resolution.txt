@@ -1,0 +1,16 @@
+Resolution: 5 stale cron-generated refactor plans for src/screens/welcome_screen.py
+(2026-09-05 / 07 / 08 / 09 / 10 — all 152-154 lines, all identical structure)
+
+Verified 2026-09-11 against live tree. NONE were ever implemented:
+  - src/screens/welcome_screen.py is untouched: 1563 lines, zero refactor markers,
+    git log shows only the 72d34ec chore commit (no refactor commits).
+  - All 5 plans target TypeScript tooling (pnpm, knip, ts-prune, export barrels,
+    Next.js build/test gates) on a pygame/Python file. Toolchain mismatch —
+    stillborn the moment an implementer tried to run them.
+  - Structural analysis in every plan reads "(no structural signals detected)".
+  - 09-10 review verdict: NEEDS-REVISION, ready_for_impl=false (same findings).
+
+Decision: archive as stale/unimplemented. NOT re-derived — re-deriving would
+fabricate work against a plan that was never approved and whose own review
+rejected it. If a welcome_screen refactor is wanted, author a fresh Python-
+scoped plan from the live file.
