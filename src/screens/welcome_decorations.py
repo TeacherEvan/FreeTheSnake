@@ -5,7 +5,6 @@ import random
 import math
 import colorsys
 from constants import *
-from utils import draw_text, draw_animated_text
 
 
 class WelcomeDecorations:

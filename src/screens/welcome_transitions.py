@@ -1,9 +1,7 @@
 # welcome_transitions.py
 # Extracted from WelcomeScreen via surgical-implementation refactor.
 import pygame
-import random
 import math
-import colorsys
 from constants import *
 from utils import draw_text, draw_animated_text
 
